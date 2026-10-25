@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Full Webpage Screenshot",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Capture a full-resolution screenshot of the entire webpage in one click, including everything below the fold.",
-  "permissions": ["debugger", "activeTab", "downloads", "notifications", "scripting"],
+  "permissions": ["debugger", "activeTab", "downloads", "notifications", "scripting", "storage"],
   "action": {
     "default_title": "Capture full webpage screenshot",
     "default_icon": {

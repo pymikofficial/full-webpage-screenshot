@@ -35,6 +35,7 @@ v1.1 instead splits a page that doesn't fit into multiple full-resolution files 
 - `scripting`, runs the pre-scroll pass to trigger lazy-loaded content
 - `downloads`, saves the resulting PNG
 - `notifications`, confirms when a screenshot is saved, or reports an error
+- `storage`, keeps a local count of captures so a one-time "rate this extension" notification appears after the 5th capture (asked at most twice, never again once you rate or say no thanks). Nothing is sent anywhere.
 
 ## Installation
 
