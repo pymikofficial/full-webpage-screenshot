@@ -165,6 +165,7 @@ async function runCapture(tab) {
         : baseFilename.split('/').pop()
     );
     setTimeout(() => clearBadge(tab.id), 1800);
+    countCaptureAndMaybeAskForRating();
   } finally {
     if (debuggerAttached) {
       await detachDebugger(tab.id);
@@ -292,3 +293,49 @@ function notify(title, message) {
     message
   });
 }
+
+// ---- one-time rating prompt ----
+// After the 5th successful capture, one notification asks for a rating. If it
+// is ignored, it asks once more at the 25th, then never again. Rating or
+// saying no thanks stops it for good. The count is stored locally only.
+const REVIEW_URL = 'https://chromewebstore.google.com/detail/gdejgnbdmnfpdalaaefhmbecnecdfkbf/reviews';
+const RATE_NOTIFICATION_ID = 'fullshot-rate';
+const ASK_AT = [5, 25];
+
+function countCaptureAndMaybeAskForRating() {
+  chrome.storage.local.get({ captureCount: 0, rateStatus: 'pending' }, ({ captureCount, rateStatus }) => {
+    const count = captureCount + 1;
+    chrome.storage.local.set({ captureCount: count });
+    if (rateStatus !== 'pending' || !ASK_AT.includes(count)) return;
+    // Wait for the "Screenshot saved" notification to land first.
+    setTimeout(() => {
+      chrome.notifications.create(RATE_NOTIFICATION_ID, {
+        type: 'basic',
+        iconUrl: 'icons/icon128.png',
+        title: `${count} screenshots saved`,
+        message: 'Finding it useful? A quick rating on the Chrome Web Store helps other people find it.',
+        buttons: [{ title: 'Rate it' }, { title: 'No thanks' }]
+      });
+    }, 2500);
+  });
+}
+
+function openReview() {
+  chrome.storage.local.set({ rateStatus: 'rated' });
+  chrome.tabs.create({ url: REVIEW_URL });
+  chrome.notifications.clear(RATE_NOTIFICATION_ID);
+}
+
+chrome.notifications.onButtonClicked.addListener((id, buttonIndex) => {
+  if (id !== RATE_NOTIFICATION_ID) return;
+  if (buttonIndex === 0) {
+    openReview();
+  } else {
+    chrome.storage.local.set({ rateStatus: 'dismissed' });
+    chrome.notifications.clear(RATE_NOTIFICATION_ID);
+  }
+});
+
+chrome.notifications.onClicked.addListener((id) => {
+  if (id === RATE_NOTIFICATION_ID) openReview();
+});
